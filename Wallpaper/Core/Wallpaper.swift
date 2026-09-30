@@ -339,10 +339,11 @@ final class Wallpaper: NSObject {
         let bounds = contentView.bounds
         guard bounds.width > 0, bounds.height > 0 else { return }
         let panel = GlassSpectrumView.panelSize(in: bounds.size)
-        let padding: CGFloat = 96
+        let padding: CGFloat = 48
         let hostSize = CGSize(width: panel.width + padding * 2, height: panel.height + padding * 2)
         let centreY = bounds.height * (1 - GlassSpectrumView.verticalPosition)
         let host = NSHostingView(rootView: GlassSpectrumView(store: spectrumStore, panelSize: panel))
+        host.layer?.backgroundColor = NSColor.clear.cgColor
         host.frame = CGRect(
             x: (bounds.width - hostSize.width) / 2,
             y: centreY - hostSize.height / 2,

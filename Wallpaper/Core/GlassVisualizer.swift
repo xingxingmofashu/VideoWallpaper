@@ -9,7 +9,6 @@ final class SpectrumStore: ObservableObject {
 
 struct GlassSpectrumView: View {
     static let verticalPosition: CGFloat = 0.68
-    static let cornerRadius: CGFloat = 40
     static let widthRatio: CGFloat = 0.48
     static let heightRatio: CGFloat = 0.14
     static let minimumWidth: CGFloat = 720
@@ -29,13 +28,11 @@ struct GlassSpectrumView: View {
     let panelSize: CGSize
 
     var body: some View {
-        GlassEffectContainer {
-            Canvas { context, size in
-                draw(in: &context, size: size)
-            }
-            .frame(width: panelSize.width, height: panelSize.height)
-            .glassEffect(.clear, in: .rect(cornerRadius: Self.cornerRadius))
+        Canvas { context, size in
+            draw(in: &context, size: size)
         }
+        .frame(width: panelSize.width, height: panelSize.height)
+        .shadow(color: Color.black.opacity(0.45), radius: 10, y: 1)
         .opacity(store.visible ? 1 : 0)
         .animation(.easeInOut(duration: 0.35), value: store.visible)
     }
