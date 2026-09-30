@@ -5,6 +5,6 @@ struct MuteCommand: Command {
     let summary = "Mute the running instance"
 
     func execute(arguments: [String]) -> Int32 {
-        SoundControl.signal(SIGUSR1, confirmation: "Muted")
+        ControlClient.send("mute")
     }
 }

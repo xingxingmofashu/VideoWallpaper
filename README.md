@@ -33,6 +33,7 @@ vw stop                            # stop
 - Play a playlist: pass several files or a directory to play them one after another, in filename order or `--shuffle`
 - Silent by default; set `--volume <0.0-1.0>` to play the video's audio
 - Toggle the running instance's audio at any time with `vw mute` / `vw unmute`
+- Optional audio spectrum panel in the middle of the desktop (`--waveform`); it follows the video's own audio and settles while muted
 - Detached daemon: keeps playing after the terminal closes; `vw run` exits immediately with `Started (PID n)`
 - Single-instance lock (`flock`); concurrent starts fail fast with a clear message
 - Self-protection: exits on decoder failure, playback stall (8 s by default) or main-thread freeze (6 s by default), instead of showing a frozen desktop forever
@@ -80,6 +81,7 @@ vw run <video|dir>... [options]   play video wallpaper in background
 vw stop                    stop the running instance
 vw mute                    mute the running instance's audio
 vw unmute                  unmute the running instance's audio
+vw waveform on|off         turn the desktop waveform on or off
 vw uninstall               stop the instance, remove the binary and runtime data
 vw version                 show version
 vw help                    show full help
@@ -95,6 +97,7 @@ vw help                    show full help
 | `--shuffle` | play the videos in random order | filename order |
 | `--rate <0.1-1.0>` | cap playback rate to lower CPU/GPU load | `1.0` |
 | `--volume <0.0-1.0>` | audio volume; `0` keeps playback silent | `0` |
+| `--waveform` | show an audio spectrum panel in the middle of the desktop | off |
 | `--stall <seconds>` | auto-exit after playback stalls this long; `0` disables (max 86400) | `8` |
 | `--watchdog <seconds>` | auto-exit if the main thread is unresponsive this long; `0` disables (max 86400) | `6` |
 
@@ -102,6 +105,7 @@ Examples:
 
 ```bash
 vw run ~/Videos/wallpaper.mov --single --rate 0.5
+vw run ~/Videos/wallpaper.mov --volume 0.4 --waveform        # sound + waveform
 vw run ~/Videos/wallpapers --shuffle                    # every video in a folder, shuffled
 vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # disable auto-exit guards
 ```
@@ -127,6 +131,7 @@ vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # disable auto-exit guard
 |---|---|
 | `~/.vw/vw.pid` | PID of the running daemon |
 | `~/.vw/vw.lock` | single-instance lock |
+| `~/.vw/vw.sock` | runtime control socket |
 | `~/.vw/vw.log` | daemon output/errors (truncated at each start) |
 
 ## Troubleshooting

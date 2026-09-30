@@ -5,6 +5,6 @@ struct UnmuteCommand: Command {
     let summary = "Unmute the running instance"
 
     func execute(arguments: [String]) -> Int32 {
-        SoundControl.signal(SIGUSR2, confirmation: "Unmuted")
+        ControlClient.send("unmute")
     }
 }

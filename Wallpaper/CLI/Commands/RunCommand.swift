@@ -12,6 +12,7 @@ struct RunOptions {
     var shuffle = false
     var rate: Float = 1.0
     var volume: Float = 0
+    var waveform = false
     var stallLimit: TimeInterval = 8
     var watchdogLimit: TimeInterval = 6
 
@@ -46,6 +47,8 @@ struct RunOptions {
                 options.rate = try nextValue("--rate") { (0.1...1.0).contains($0) }
             case "--volume":
                 options.volume = try nextValue("--volume") { (0.0...1.0).contains($0) }
+            case "--waveform":
+                options.waveform = true
             case "--stall":
                 options.stallLimit = try nextValue("--stall") { $0 >= 0 && $0 <= 86400 }
             case "--watchdog":
@@ -71,6 +74,7 @@ struct RunCommand: Command {
           --shuffle             Play the videos in random order (default: filename order)
           --rate <0.1-1.0>      Max playback rate to lower CPU/GPU load (default: 1.0)
           --volume <0.0-1.0>    Audio volume; 0 keeps it silent (default: 0)
+          --waveform            Show an audio spectrum panel in the middle of the desktop
           --stall <seconds>     Auto-exit when playback stalls or never starts within this long, 0 disables (default: 8, max 86400)
           --watchdog <seconds>  Auto-exit if UI is unresponsive this long, 0 disables (default: 6, max 86400)
 
@@ -222,6 +226,7 @@ struct RunCommand: Command {
         var args: [String] = []
         if options.singleScreen { args.append("--single") }
         if options.shuffle { args.append("--shuffle") }
+        if options.waveform { args.append("--waveform") }
         args.append("--rate")
         args.append(String(options.rate))
         args.append("--volume")
@@ -254,21 +259,36 @@ struct RunCommand: Command {
 
         let playlist = Playlist(urls: urls, shuffle: options.shuffle)
         let wallpaper = Wallpaper(playlist: playlist, options: options)
-        wallpaper.start()
-
-        let signalHandler = SignalHandler(signals: [SIGINT, SIGTERM, SIGUSR1, SIGUSR2]) { sig in
-            switch sig {
-            case SIGUSR1:
+        let control = ControlServer { command in
+            switch command {
+            case "mute":
                 wallpaper.mute()
-            case SIGUSR2:
+                return "Muted"
+            case "unmute":
                 wallpaper.unmute()
+                return "Unmuted"
+            case "waveform on":
+                wallpaper.setWaveform(true)
+                return "Waveform on"
+            case "waveform off":
+                wallpaper.setWaveform(false)
+                return "Waveform off"
             default:
-                wallpaper.stop()
-                PIDFile.shared.remove()
-                exit(0)
+                return "Unknown command"
             }
         }
-        withExtendedLifetime(signalHandler) {
+        if control == nil {
+            Console.error("Failed to start the control socket")
+        }
+        wallpaper.start()
+
+        let signalHandler = SignalHandler(signals: [SIGINT, SIGTERM]) {
+            control?.shutdown()
+            wallpaper.stop()
+            PIDFile.shared.remove()
+            exit(0)
+        }
+        withExtendedLifetime((signalHandler, control)) {
             app.run()
         }
 

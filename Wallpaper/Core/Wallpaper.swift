@@ -1,5 +1,6 @@
 import Cocoa
 import AVFoundation
+import SwiftUI
 
 final class Wallpaper: NSObject {
     private let player: AVQueuePlayer
@@ -13,6 +14,13 @@ final class Wallpaper: NSObject {
 
     private var heartbeatTimer: Timer?
     private var stallTimer: Timer?
+    private var waveformTimer: Timer?
+
+    private var waveformHosts: [NSView] = []
+    private var spectrum: AudioSpectrum?
+    private let spectrumStore = SpectrumStore()
+    private var observedItem: AVPlayerItem?
+    private var waveformEnabled = false
 
     private var isRunning = false
     private var isAsleep = false
@@ -28,6 +36,10 @@ final class Wallpaper: NSObject {
         player.isMuted = options.volume <= 0
         player.defaultRate = options.rate
         super.init()
+        if options.waveform {
+            spectrum = AudioSpectrum()
+            waveformEnabled = true
+        }
         observeCurrentItem()
     }
 
@@ -44,6 +56,9 @@ final class Wallpaper: NSObject {
         startHeartbeat()
         startStallMonitor()
         startWatchdog()
+        if waveformEnabled {
+            startWaveformTimer()
+        }
     }
 
     func stop() {
@@ -61,6 +76,9 @@ final class Wallpaper: NSObject {
         heartbeatTimer = nil
         stallTimer?.invalidate()
         stallTimer = nil
+        waveformTimer?.invalidate()
+        waveformTimer = nil
+        observedItem = nil
         player.pause()
         teardownWindows()
     }
@@ -131,6 +149,16 @@ final class Wallpaper: NSObject {
         itemObserverTokens.removeAll()
         guard let item = player.currentItem else { return }
 
+        if waveformEnabled, let spectrum {
+            if let observedItem, observedItem !== item {
+                spectrum.detach(from: observedItem)
+            }
+            observedItem = item
+            spectrum.attach(to: item) { [weak self] hasAudio in
+                self?.spectrumStore.visible = hasAudio
+            }
+        }
+
         statusObservation?.invalidate()
         statusObservation = item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
             DispatchQueue.main.async { [weak self] in
@@ -200,12 +228,19 @@ final class Wallpaper: NSObject {
 
         let contentView = window.contentView ?? NSView()
         contentView.wantsLayer = true
-        let layer = AVPlayerLayer(player: player)
-        layer.videoGravity = .resizeAspectFill
-        layer.frame = contentView.bounds
-        layer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
-        contentView.layer = layer
+        let container = CALayer()
+        container.frame = contentView.bounds
+        container.backgroundColor = NSColor.black.cgColor
+        let videoLayer = AVPlayerLayer(player: player)
+        videoLayer.videoGravity = .resizeAspectFill
+        videoLayer.frame = container.bounds
+        container.addSublayer(videoLayer)
+        contentView.layer = container
         window.contentView = contentView
+
+        if waveformEnabled {
+            addWaveformHost(contentView: contentView)
+        }
 
         window.orderFrontRegardless()
         return window
@@ -228,6 +263,7 @@ final class Wallpaper: NSObject {
     }
 
     private func teardownWindows() {
+        waveformHosts.removeAll()
         windows.forEach { $0.contentView?.layer = nil }
         windows.forEach { $0.orderOut(nil) }
         windows.removeAll()
@@ -237,6 +273,83 @@ final class Wallpaper: NSObject {
         heartbeatTimer = repeatingTimer(interval: 0.5) { [weak self] in
             self?.lastHeartbeat = Date()
         }
+    }
+
+    private func startWaveformTimer() {
+        guard waveformTimer == nil else { return }
+        waveformTimer = repeatingTimer(interval: 1.0 / 30.0) { [weak self] in
+            self?.tickWaveform()
+        }
+    }
+
+    private func stopWaveformTimer() {
+        waveformTimer?.invalidate()
+        waveformTimer = nil
+    }
+
+    private func tickWaveform() {
+        guard isRunning, waveformEnabled, let spectrum else { return }
+        let (bands, peaks) = spectrum.advance(active: !player.isMuted)
+        spectrumStore.bands = bands
+        spectrumStore.peaks = peaks
+    }
+
+    func setWaveform(_ enabled: Bool) {
+        guard waveformEnabled != enabled else { return }
+        waveformEnabled = enabled
+        if enabled {
+            if spectrum == nil {
+                spectrum = AudioSpectrum()
+            }
+            if let item = player.currentItem, let spectrum {
+                observedItem = item
+                spectrum.attach(to: item) { [weak self] hasAudio in
+                    self?.spectrumStore.visible = hasAudio
+                }
+            }
+            addWaveformHosts()
+            startWaveformTimer()
+        } else {
+            stopWaveformTimer()
+            removeWaveformHosts()
+            if let observedItem, let spectrum {
+                spectrum.detach(from: observedItem)
+            }
+            observedItem = nil
+            spectrumStore.visible = false
+            spectrumStore.bands = []
+            spectrumStore.peaks = []
+        }
+    }
+
+    private func addWaveformHosts() {
+        guard waveformHosts.isEmpty else { return }
+        for window in windows {
+            guard let contentView = window.contentView else { continue }
+            addWaveformHost(contentView: contentView)
+        }
+    }
+
+    private func removeWaveformHosts() {
+        waveformHosts.forEach { $0.removeFromSuperview() }
+        waveformHosts.removeAll()
+    }
+
+    private func addWaveformHost(contentView: NSView) {
+        let bounds = contentView.bounds
+        guard bounds.width > 0, bounds.height > 0 else { return }
+        let panel = GlassSpectrumView.panelSize(in: bounds.size)
+        let padding: CGFloat = 96
+        let hostSize = CGSize(width: panel.width + padding * 2, height: panel.height + padding * 2)
+        let centreY = bounds.height * (1 - GlassSpectrumView.verticalPosition)
+        let host = NSHostingView(rootView: GlassSpectrumView(store: spectrumStore, panelSize: panel))
+        host.frame = CGRect(
+            x: (bounds.width - hostSize.width) / 2,
+            y: centreY - hostSize.height / 2,
+            width: hostSize.width,
+            height: hostSize.height)
+        contentView.addSubview(host)
+        waveformHosts.append(host)
     }
 
     private var lastProgress = CMTime.zero

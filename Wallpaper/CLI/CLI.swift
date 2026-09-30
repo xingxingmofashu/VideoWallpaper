@@ -6,6 +6,7 @@ enum CLI {
         StopCommand(),
         MuteCommand(),
         UnmuteCommand(),
+        WaveformCommand(),
         UninstallCommand(),
         VersionCommand(),
         HelpCommand(),

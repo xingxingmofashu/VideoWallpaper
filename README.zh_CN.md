@@ -33,6 +33,7 @@ vw stop                            # 停止
 - 播放列表：可传入多个文件或一个目录，按文件名顺序或 `--shuffle` 依次播放
 - 默认静音；用 `--volume <0.0-1.0>` 播放视频原声
 - 运行中可随时用 `vw mute` / `vw unmute` 开/关声音
+- 可选：在桌面中部显示音频频谱面板（`--waveform`）；跟随视频自身音频，静音时落平
 - 守护进程运行：终端关闭后壁纸继续播放；`vw run` 立即返回 `Started (PID n)`
 - 单实例锁（`flock`）；并发启动会被快速拒绝并给出明确提示
 - 自我保护：解码失败、播放停滞（默认 8 秒）、主线程无响应（默认 6 秒）时自动退出，而不是让桌面永远卡住
@@ -79,6 +80,7 @@ vw run <视频|目录>... [选项]   后台播放视频壁纸
 vw stop                停止当前实例
 vw mute                静音当前实例
 vw unmute              取消静音当前实例
+vw waveform on|off     开/关桌面波形
 vw uninstall           停止实例并删除二进制与运行数据
 vw version             显示版本
 vw help                显示完整帮助
@@ -94,6 +96,7 @@ vw help                显示完整帮助
 | `--shuffle` | 随机顺序播放 | 文件名顺序 |
 | `--rate <0.1-1.0>` | 限制播放速率以降低 CPU/GPU 占用 | `1.0` |
 | `--volume <0.0-1.0>` | 音频音量；`0` 静音 | `0` |
+| `--waveform` | 在桌面中部显示音频频谱面板 | 关闭 |
 | `--stall <秒>` | 播放停滞超过该时长自动退出；`0` 关闭（上限 86400） | `8` |
 | `--watchdog <秒>` | 主线程无响应超过该时长自动退出；`0` 关闭（上限 86400） | `6` |
 
@@ -101,6 +104,7 @@ vw help                显示完整帮助
 
 ```bash
 vw run ~/Videos/wallpaper.mov --single --rate 0.5
+vw run ~/Videos/wallpaper.mov --volume 0.4 --waveform        # 出声 + 波形
 vw run ~/Videos/wallpapers --shuffle                   # 依次播放目录内全部视频（随机顺序）
 vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # 关闭自动退出保护
 ```
@@ -125,6 +129,7 @@ vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # 关闭自动退出保�
 |---|---|
 | `~/.vw/vw.pid` | 守护进程 PID |
 | `~/.vw/vw.lock` | 单实例锁 |
+| `~/.vw/vw.sock` | 运行时控制套接字 |
 | `~/.vw/vw.log` | 守护进程输出/错误（每次启动时清空） |
 
 ## 常见问题
