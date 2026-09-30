@@ -4,6 +4,9 @@ enum CLI {
     static let commands: [any Command] = [
         RunCommand(),
         StopCommand(),
+        MuteCommand(),
+        UnmuteCommand(),
+        WaveformCommand(),
         UninstallCommand(),
         VersionCommand(),
         HelpCommand(),
