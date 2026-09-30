@@ -24,7 +24,8 @@ final class Wallpaper: NSObject {
         self.playlist = playlist
         self.options = options
         player = AVQueuePlayer(items: [AVPlayerItem(url: playlist.next())])
-        player.isMuted = true
+        player.volume = options.volume
+        player.isMuted = options.volume <= 0
         player.defaultRate = options.rate
         super.init()
         observeCurrentItem()
@@ -93,6 +94,17 @@ final class Wallpaper: NSObject {
         guard isRunning else { return }
         isAsleep = false
         player.play()
+    }
+
+    func mute() {
+        player.isMuted = true
+    }
+
+    func unmute() {
+        if player.volume <= 0 {
+            player.volume = 1
+        }
+        player.isMuted = false
     }
 
     private func observeCurrentItem() {

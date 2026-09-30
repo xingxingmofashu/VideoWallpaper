@@ -11,6 +11,7 @@ struct RunOptions {
     var singleScreen = false
     var shuffle = false
     var rate: Float = 1.0
+    var volume: Float = 0
     var stallLimit: TimeInterval = 8
     var watchdogLimit: TimeInterval = 6
 
@@ -43,6 +44,8 @@ struct RunOptions {
                 options.shuffle = true
             case "--rate":
                 options.rate = try nextValue("--rate") { (0.1...1.0).contains($0) }
+            case "--volume":
+                options.volume = try nextValue("--volume") { (0.0...1.0).contains($0) }
             case "--stall":
                 options.stallLimit = try nextValue("--stall") { $0 >= 0 && $0 <= 86400 }
             case "--watchdog":
@@ -67,6 +70,7 @@ struct RunCommand: Command {
           --single              Cover only the main display (default: all screens)
           --shuffle             Play the videos in random order (default: filename order)
           --rate <0.1-1.0>      Max playback rate to lower CPU/GPU load (default: 1.0)
+          --volume <0.0-1.0>    Audio volume; 0 keeps it silent (default: 0)
           --stall <seconds>     Auto-exit when playback stalls or never starts within this long, 0 disables (default: 8, max 86400)
           --watchdog <seconds>  Auto-exit if UI is unresponsive this long, 0 disables (default: 6, max 86400)
 
@@ -220,6 +224,8 @@ struct RunCommand: Command {
         if options.shuffle { args.append("--shuffle") }
         args.append("--rate")
         args.append(String(options.rate))
+        args.append("--volume")
+        args.append(String(options.volume))
         args.append("--stall")
         args.append(String(options.stallLimit))
         args.append("--watchdog")
@@ -250,10 +256,17 @@ struct RunCommand: Command {
         let wallpaper = Wallpaper(playlist: playlist, options: options)
         wallpaper.start()
 
-        let signalHandler = SignalHandler(signals: [SIGINT, SIGTERM]) {
-            wallpaper.stop()
-            PIDFile.shared.remove()
-            exit(0)
+        let signalHandler = SignalHandler(signals: [SIGINT, SIGTERM, SIGUSR1, SIGUSR2]) { sig in
+            switch sig {
+            case SIGUSR1:
+                wallpaper.mute()
+            case SIGUSR2:
+                wallpaper.unmute()
+            default:
+                wallpaper.stop()
+                PIDFile.shared.remove()
+                exit(0)
+            }
         }
         withExtendedLifetime(signalHandler) {
             app.run()
