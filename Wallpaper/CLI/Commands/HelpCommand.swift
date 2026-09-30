@@ -29,6 +29,7 @@ struct HelpCommand: Command {
         lines.append("")
         lines.append("Examples:")
         lines.append("  \(Version.name) run ~/Videos/wallpaper.mov")
+        lines.append("  \(Version.name) run ~/Videos/wallpapers --shuffle")
         lines.append("  \(Version.name) run video.mov --single --rate 0.5")
         return lines.joined(separator: "\n")
     }

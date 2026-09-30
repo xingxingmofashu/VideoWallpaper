@@ -11,10 +11,10 @@
 ## Architecture
 
 - Entry `Wallpaper/main.swift` -> `CLI.run` (`Wallpaper/CLI/CLI.swift`); `Command` protocol in `CLI/Command.swift`, one struct per subcommand in `CLI/Commands/`.
-- `Wallpaper/Core/`: `Wallpaper.swift` (per-screen desktop-level NSWindow + AVPlayerLooper; stall/heartbeat/watchdog timers), `Daemon.swift` (re-exec self via posix_spawn, POSIX_SPAWN_SETSID, stdio -> `~/.vw/vw.log`), `PIDFile.swift`, `SignalHandler.swift`.
+- `Wallpaper/Core/`: `Wallpaper.swift` (per-screen desktop-level NSWindow + AVQueuePlayer playlist; stall/heartbeat/watchdog timers), `Playlist.swift` (ordered or shuffled URL rotation), `Daemon.swift` (re-exec self via posix_spawn, POSIX_SPAWN_SETSID, stdio -> `~/.vw/vw.log`), `PIDFile.swift`, `SignalHandler.swift`.
 - `vw run` daemonizes: parent prints `Started (PID n)` and exits; daemon errors are only visible in `~/.vw/vw.log` (truncated at each start).
 - Single instance via `flock` on `~/.vw/vw.lock`: parent acquires, daemon inherits the held lock as fd 3 (`posix_spawn_file_actions_adddup2`); the lock releases automatically when the daemon exits or is killed.
-- Daemon argv is `[exe, --vw-daemon-child, run, <video>, --rate <f>, --stall <f>, --watchdog <f>]`; the flag is prepended inside `Daemon.spawn`. Never construct daemon argv without the flag - a missing flag makes the child spawn again (fork bomb). `CLI.run` dispatches `Daemon.flag` before command lookup.
+- Daemon argv is `[exe, --vw-daemon-child, run, <video>..., --rate <f>, --stall <f>, --watchdog <f>]` (`--shuffle` is appended when set); the flag is prepended inside `Daemon.spawn`. Never construct daemon argv without the flag - a missing flag makes the child spawn again (fork bomb). `CLI.run` dispatches `Daemon.flag` before command lookup.
 - Run-option values are Doubles serialized as strings into the daemon argv (`optionArguments`) and capped by `RunOptions.parse` (rate 0.1-1.0, stall/watchdog <= 86400). Never convert user-provided Doubles with `Int()` - `--stall 1e30` once crashed the parent via the `Int(Double)` trap.
 - `PIDFile.isLiveSelf` compares `proc_pidpath` output on BOTH sides (self and target). Do not derive the self path from `CommandLine.arguments[0]` - via PATH lookup it is a bare name and the comparison always fails, silently breaking `vw stop` and the single-instance guard.
 

@@ -30,6 +30,7 @@ vw stop                            # stop
 ## Features
 
 - Plays any local video, looping, on **all screens** or only the main display
+- Play a playlist: pass several files or a directory to play them one after another, in filename order or `--shuffle`
 - Detached daemon: keeps playing after the terminal closes; `vw run` exits immediately with `Started (PID n)`
 - Single-instance lock (`flock`); concurrent starts fail fast with a clear message
 - Self-protection: exits on decoder failure, playback stall (8 s by default) or main-thread freeze (6 s by default), instead of showing a frozen desktop forever
@@ -73,7 +74,7 @@ curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scri
 ## Usage
 
 ```text
-vw run <video> [options]   play video wallpaper in background
+vw run <video|dir>... [options]   play video wallpaper in background
 vw stop                    stop the running instance
 vw uninstall               stop the instance, remove the binary and runtime data
 vw version                 show version
@@ -87,6 +88,7 @@ vw help                    show full help
 | Option | Description | Default |
 |---|---|---|
 | `--single` | cover only the main display | all screens |
+| `--shuffle` | play the videos in random order | filename order |
 | `--rate <0.1-1.0>` | cap playback rate to lower CPU/GPU load | `1.0` |
 | `--stall <seconds>` | auto-exit after playback stalls this long; `0` disables (max 86400) | `8` |
 | `--watchdog <seconds>` | auto-exit if the main thread is unresponsive this long; `0` disables (max 86400) | `6` |
@@ -95,6 +97,7 @@ Examples:
 
 ```bash
 vw run ~/Videos/wallpaper.mov --single --rate 0.5
+vw run ~/Videos/wallpapers --shuffle                    # every video in a folder, shuffled
 vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # disable auto-exit guards
 ```
 
@@ -109,6 +112,9 @@ vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # disable auto-exit guard
   guarantee covers the whole daemon lifetime and releases automatically on exit or kill.
 - One borderless `NSWindow` per screen at the desktop window level with an
   `AVPlayerLayer`; windows are rebuilt only when the screen configuration really changes.
+- The playlist keeps the next video queued on a single `AVQueuePlayer` so items
+  advance back to back; a directory expands to its videos (non-recursive), and
+  unplayable files are skipped.
 
 ### Runtime files
 

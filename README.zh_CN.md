@@ -30,6 +30,7 @@ vw stop                            # 停止
 ## 特性
 
 - 播放任意本地视频并循环，支持**所有屏幕**或仅主显示器
+- 播放列表：可传入多个文件或一个目录，按文件名顺序或 `--shuffle` 依次播放
 - 守护进程运行：终端关闭后壁纸继续播放；`vw run` 立即返回 `Started (PID n)`
 - 单实例锁（`flock`）；并发启动会被快速拒绝并给出明确提示
 - 自我保护：解码失败、播放停滞（默认 8 秒）、主线程无响应（默认 6 秒）时自动退出，而不是让桌面永远卡住
@@ -72,7 +73,7 @@ curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scri
 ## 使用
 
 ```text
-vw run <视频> [选项]   后台播放视频壁纸
+vw run <视频|目录>... [选项]   后台播放视频壁纸
 vw stop                停止当前实例
 vw uninstall           停止实例并删除二进制与运行数据
 vw version             显示版本
@@ -86,6 +87,7 @@ vw help                显示完整帮助
 | 选项 | 说明 | 默认值 |
 |---|---|---|
 | `--single` | 仅覆盖主显示器 | 所有屏幕 |
+| `--shuffle` | 随机顺序播放 | 文件名顺序 |
 | `--rate <0.1-1.0>` | 限制播放速率以降低 CPU/GPU 占用 | `1.0` |
 | `--stall <秒>` | 播放停滞超过该时长自动退出；`0` 关闭（上限 86400） | `8` |
 | `--watchdog <秒>` | 主线程无响应超过该时长自动退出；`0` 关闭（上限 86400） | `6` |
@@ -94,6 +96,7 @@ vw help                显示完整帮助
 
 ```bash
 vw run ~/Videos/wallpaper.mov --single --rate 0.5
+vw run ~/Videos/wallpapers --shuffle                   # 依次播放目录内全部视频（随机顺序）
 vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # 关闭自动退出保护
 ```
 
@@ -108,6 +111,8 @@ vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # 关闭自动退出保�
   退出或被杀时锁自动释放。
 - 每块屏幕一个无边框 `NSWindow`（桌面窗口层级）+ `AVPlayerLayer`；仅当屏幕配置
   真正变化时才重建窗口。
+- 播放列表用同一个 `AVQueuePlayer` 预置下一段视频，前后无缝衔接；目录会展开为
+  其中的视频（非递归），无法解码的文件会被跳过。
 
 ### 运行时文件
 

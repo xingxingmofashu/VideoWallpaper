@@ -3,9 +3,9 @@ import AVFoundation
 
 final class Wallpaper: NSObject {
     private let player: AVQueuePlayer
+    private let playlist: Playlist
     private let options: RunOptions
 
-    private var looper: AVPlayerLooper?
     private var windows: [NSWindow] = []
     private var itemObserverTokens: [NSObjectProtocol] = []
     private var currentItemObservation: NSKeyValueObservation?
@@ -16,12 +16,14 @@ final class Wallpaper: NSObject {
 
     private var isRunning = false
     private var isAsleep = false
+    private var consecutiveFailures = 0
 
     private(set) var lastHeartbeat = Date()
 
-    init(videoURL: URL, options: RunOptions) {
+    init(playlist: Playlist, options: RunOptions) {
+        self.playlist = playlist
         self.options = options
-        player = AVQueuePlayer(items: [AVPlayerItem(url: videoURL)])
+        player = AVQueuePlayer(items: [AVPlayerItem(url: playlist.next())])
         player.isMuted = true
         player.defaultRate = options.rate
         super.init()
@@ -36,9 +38,6 @@ final class Wallpaper: NSObject {
         guard !isRunning else { return }
         isRunning = true
         observeSystemEvents()
-        if let item = player.currentItem {
-            looper = AVPlayerLooper(player: player, templateItem: item)
-        }
         createWindows()
         player.play()
         startHeartbeat()
@@ -62,7 +61,6 @@ final class Wallpaper: NSObject {
         stallTimer?.invalidate()
         stallTimer = nil
         player.pause()
-        looper = nil
         teardownWindows()
     }
 
@@ -102,8 +100,17 @@ final class Wallpaper: NSObject {
             [weak self] _, _ in
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.currentItemObservation != nil else { return }
+                self.lastProgress = .zero
+                self.frozenSeconds = 0
+                self.replenishQueue()
                 self.attachItemObservers()
             }
+        }
+    }
+
+    private func replenishQueue() {
+        while player.items().count < 2 {
+            player.insert(AVPlayerItem(url: playlist.next()), after: player.items().last)
         }
     }
 
@@ -116,9 +123,15 @@ final class Wallpaper: NSObject {
         statusObservation = item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.statusObservation != nil else { return }
-                guard item.status == .failed else { return }
-                let detail = item.error?.localizedDescription ?? "unknown"
-                self.exitWithError("Failed to load video: \(detail)")
+                switch item.status {
+                case .readyToPlay:
+                    self.consecutiveFailures = 0
+                case .failed:
+                    let detail = item.error?.localizedDescription ?? "unknown"
+                    self.handleItemFailure(item, detail: detail)
+                default:
+                    break
+                }
             }
         }
 
@@ -127,15 +140,15 @@ final class Wallpaper: NSObject {
         ) { [weak self] note in
             let detail = (note.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? Error)?
                 .localizedDescription ?? "unknown"
-            self?.exitWithError("Decode failed: \(detail)")
+            self?.handleItemFailure(item, detail: detail)
         }
         itemObserverTokens.append(failure)
 
         let stalled = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemPlaybackStalled, object: item, queue: .main
         ) { [weak self] _ in
-            guard let self = self, self.options.stallLimit > 0 else { return }
-            self.exitWithError("Playback stalled")
+            guard let self, self.options.stallLimit > 0 else { return }
+            self.handleItemFailure(item, detail: "Playback stalled")
         }
         itemObserverTokens.append(stalled)
 
@@ -270,6 +283,21 @@ final class Wallpaper: NSObject {
         let timer = Timer(timeInterval: interval, repeats: true) { _ in handler() }
         RunLoop.main.add(timer, forMode: .common)
         return timer
+    }
+
+    private func handleItemFailure(_ item: AVPlayerItem, detail: String) {
+        guard item === player.currentItem else { return }
+        consecutiveFailures += 1
+        if consecutiveFailures >= playlist.count {
+            exitWithError("All videos failed to play: \(detail)")
+            return
+        }
+        Console.info("Skipping unplayable video: \(detail)")
+        player.advanceToNextItem()
+        replenishQueue()
+        if !isAsleep {
+            player.play()
+        }
     }
 
     private func exitWithError(_ message: String) {

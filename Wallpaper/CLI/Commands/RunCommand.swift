@@ -1,5 +1,6 @@
 import Foundation
 import Cocoa
+import UniformTypeIdentifiers
 
 struct OptionError: LocalizedError {
     let message: String
@@ -8,12 +9,19 @@ struct OptionError: LocalizedError {
 
 struct RunOptions {
     var singleScreen = false
+    var shuffle = false
     var rate: Float = 1.0
     var stallLimit: TimeInterval = 8
     var watchdogLimit: TimeInterval = 6
 
-    static func parse(_ args: [String]) throws -> RunOptions {
+    struct Parsed {
+        var paths: [String]
+        var options: RunOptions
+    }
+
+    static func parse(_ args: [String]) throws -> Parsed {
         var options = RunOptions()
+        var paths: [String] = []
         var index = 0
 
         func nextValue<T>(_ name: String, validate: (T) -> Bool) throws -> T
@@ -31,6 +39,8 @@ struct RunOptions {
             switch args[index] {
             case "--single":
                 options.singleScreen = true
+            case "--shuffle":
+                options.shuffle = true
             case "--rate":
                 options.rate = try nextValue("--rate") { (0.1...1.0).contains($0) }
             case "--stall":
@@ -38,69 +48,108 @@ struct RunOptions {
             case "--watchdog":
                 options.watchdogLimit = try nextValue("--watchdog") { $0 >= 0 && $0 <= 86400 }
             default:
-                throw OptionError(message: "Unknown option: \(args[index])")
+                guard !args[index].hasPrefix("-") else {
+                    throw OptionError(message: "Unknown option: \(args[index])")
+                }
+                paths.append(args[index])
             }
             index += 1
         }
-        return options
+        return Parsed(paths: paths, options: options)
     }
 }
 
 struct RunCommand: Command {
     let name = "run"
-    let summary = "<video> [options]  Play video wallpaper in background"
+    let summary = "<video|dir>... [options]  Play video wallpaper in background"
     let optionsHelp = """
         Options:
           --single              Cover only the main display (default: all screens)
+          --shuffle             Play the videos in random order (default: filename order)
           --rate <0.1-1.0>      Max playback rate to lower CPU/GPU load (default: 1.0)
           --stall <seconds>     Auto-exit when playback stalls or never starts within this long, 0 disables (default: 8, max 86400)
           --watchdog <seconds>  Auto-exit if UI is unresponsive this long, 0 disables (default: 6, max 86400)
 
-        The command returns immediately; the wallpaper keeps playing after the
-        terminal is closed. Stop it with `vw stop`. Errors go to ~/.vw/vw.log.
+        Pass one or more videos; a directory plays all videos inside it (not
+        recursive) in filename order, one after another. Unplayable videos are
+        skipped. The command returns immediately; the wallpaper keeps playing
+        after the terminal is closed. Stop it with `vw stop`. Errors go to
+        ~/.vw/vw.log.
         """
 
     func execute(arguments: [String]) -> Int32 {
         guard let input = validatedInput(arguments) else { return 1 }
-        return startDetached(videoURL: input.videoURL, options: input.options)
+        return startDetached(urls: input.urls, options: input.options)
     }
 
-    /// Internal entry for the detached daemon process.
     func executeDaemon(arguments: [String]) -> Int32 {
         let args = arguments.first == "run" ? Array(arguments.dropFirst()) : arguments
         guard let input = validatedInput(args) else { return 1 }
-        return runDaemon(videoURL: input.videoURL, options: input.options)
+        return runDaemon(urls: input.urls, options: input.options)
     }
 
-    private func validatedInput(_ arguments: [String]) -> (videoURL: URL, options: RunOptions)? {
-        guard let videoPath = arguments.first, !videoPath.hasPrefix("-") else {
-            Console.error("Missing video path")
-            Console.info(HelpCommand().usage())
-            return nil
-        }
-        let videoURL = URL(fileURLWithPath: videoPath)
-        var isDirectory: ObjCBool = false
-        guard FileManager.default.fileExists(atPath: videoURL.path, isDirectory: &isDirectory) else {
-            Console.error("File not found: \(videoURL.path)")
-            return nil
-        }
-        guard !isDirectory.boolValue else {
-            Console.error("Not a video file: \(videoURL.path)")
-            return nil
-        }
-        guard isReadable(videoURL) else {
-            Console.error("No permission to read file: \(videoURL.path)")
-            Console.error("If the file is in Downloads/Desktop/Documents, grant your terminal app access in System Settings > Privacy & Security > Files and Folders, or move the file to an unrestricted folder such as ~/Movies")
-            return nil
-        }
-        let options: RunOptions
+    private func validatedInput(_ arguments: [String]) -> (urls: [URL], options: RunOptions)? {
+        let parsed: RunOptions.Parsed
         do {
-            options = try RunOptions.parse(Array(arguments.dropFirst()))
+            parsed = try RunOptions.parse(arguments)
         } catch {
             Console.error("\(error.localizedDescription)")
             return nil
         }
-        return (videoURL, options)
+
+        guard !parsed.paths.isEmpty else {
+            Console.error("Missing video path")
+            Console.info(HelpCommand().usage())
+            return nil
+        }
+
+        var urls: [URL] = []
+        for path in parsed.paths {
+            let url = URL(fileURLWithPath: path)
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
+                Console.error("File not found: \(url.path)")
+                return nil
+            }
+            if isDirectory.boolValue {
+                let videos = videoFiles(in: url)
+                guard !videos.isEmpty else {
+                    Console.error("No videos found in: \(url.path)")
+                    return nil
+                }
+                urls.append(contentsOf: videos)
+            } else {
+                guard isReadable(url) else {
+                    Console.error("No permission to read file: \(url.path)")
+                    Console.error("If the file is in Downloads/Desktop/Documents, grant your terminal app access in System Settings > Privacy & Security > Files and Folders, or move the file to an unrestricted folder such as ~/Movies")
+                    return nil
+                }
+                guard isVideo(url) else {
+                    Console.error("Not a video file: \(url.path)")
+                    return nil
+                }
+                urls.append(url)
+            }
+        }
+        return (urls, parsed.options)
+    }
+
+    private func videoFiles(in directory: URL) -> [URL] {
+        guard let entries = try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey, .contentTypeKey],
+            options: [.skipsHiddenFiles]
+        ) else { return [] }
+        return entries
+            .filter { isVideo($0) }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+
+    private func isVideo(_ url: URL) -> Bool {
+        guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .contentTypeKey]),
+              values.isRegularFile == true,
+              let type = values.contentType else { return false }
+        return type.conforms(to: .movie)
     }
 
     private func isReadable(_ url: URL) -> Bool {
@@ -110,7 +159,7 @@ struct RunCommand: Command {
         return true
     }
 
-    private func startDetached(videoURL: URL, options: RunOptions) -> Int32 {
+    private func startDetached(urls: [URL], options: RunOptions) -> Int32 {
         let pidFile = PIDFile.shared
         let dataDir = pidFile.url.deletingLastPathComponent()
         let logURL = dataDir.appendingPathComponent("vw.log")
@@ -147,7 +196,7 @@ struct RunCommand: Command {
         FileManager.default.createFile(atPath: logURL.path, contents: nil)
 
         do {
-            let command = ["run", videoURL.path] + optionArguments(options)
+            let command = ["run"] + urls.map { $0.path } + optionArguments(options)
             let pid = try Daemon.spawn(detachedCommand: command, logURL: logURL, lockFD: lockFD)
             Console.info("Started (PID \(pid))")
             return 0
@@ -168,6 +217,7 @@ struct RunCommand: Command {
     private func optionArguments(_ options: RunOptions) -> [String] {
         var args: [String] = []
         if options.singleScreen { args.append("--single") }
+        if options.shuffle { args.append("--shuffle") }
         args.append("--rate")
         args.append(String(options.rate))
         args.append("--stall")
@@ -177,7 +227,7 @@ struct RunCommand: Command {
         return args
     }
 
-    private func runDaemon(videoURL: URL, options: RunOptions) -> Int32 {
+    private func runDaemon(urls: [URL], options: RunOptions) -> Int32 {
         let pidFile = PIDFile.shared
 
         signal(SIGHUP, SIG_IGN)
@@ -196,7 +246,8 @@ struct RunCommand: Command {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
 
-        let wallpaper = Wallpaper(videoURL: videoURL, options: options)
+        let playlist = Playlist(urls: urls, shuffle: options.shuffle)
+        let wallpaper = Wallpaper(playlist: playlist, options: options)
         wallpaper.start()
 
         let signalHandler = SignalHandler(signals: [SIGINT, SIGTERM]) {
