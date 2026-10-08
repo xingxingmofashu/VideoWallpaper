@@ -69,10 +69,12 @@ the previous binary before copying, because overwriting a signed binary in place
 Uninstall:
 
 ```bash
-vw uninstall                                         # using the installed CLI
-./Scripts/install.sh --uninstall                    # from a clone
-curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash -s -- --uninstall
+vw uninstall
 ```
+
+It stops the running instance, removes the installed binary and deletes `~/.vw`. If the
+binary sits in a directory you cannot write (for example `/usr/local/bin` installed via
+sudo), it prints the `sudo rm` command to run instead.
 
 ## Usage
 

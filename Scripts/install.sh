@@ -1,9 +1,8 @@
 #!/bin/bash
-# One-click install/uninstall for the vw CLI.
+# One-click install for the vw CLI.
 #
 # Usage:
 #   Scripts/install.sh                       Build (Release) and install from this repo
-#   Scripts/install.sh --uninstall           Stop the instance and remove installed files
 #   VW_PREFIX=/some/dir Scripts/install.sh   Install to a custom prefix
 #   curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash
 #                                            Download the latest release and install (no clone needed)
@@ -17,7 +16,6 @@
 set -euo pipefail
 
 REPO="xingxingmofashu/VideoWallpaper"
-APP_DIR="$HOME/.vw"
 
 resolve_dest() {
     if [ -n "${VW_PREFIX:-}" ]; then
@@ -38,17 +36,6 @@ SUDO=""
 if [ ! -d "$DEST_DIR" ] || [ ! -w "$DEST_DIR" ]; then
     SUDO="sudo"
 fi
-
-uninstall() {
-    if [ -x "$DEST" ]; then
-        "$DEST" stop || true
-    fi
-    $SUDO rm -f "$DEST"
-    rm -rf "$APP_DIR"
-    echo "Uninstalled from $DEST."
-}
-
-[ "${1:-}" = "--uninstall" ] && uninstall && exit 0
 
 install_binary() {
     echo "Installing to $DEST..."
