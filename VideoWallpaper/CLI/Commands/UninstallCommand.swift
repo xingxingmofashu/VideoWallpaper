@@ -1,12 +1,15 @@
+import ArgumentParser
 import Foundation
 
-struct UninstallCommand: Command {
-    let name = "uninstall"
-    let summary = "Stop the instance, remove the binary and runtime data"
+struct UninstallCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "uninstall",
+        abstract: "Stop the instance, remove the binary and runtime data")
 
-    func execute(arguments: [String]) -> Int32 {
-        let stopStatus = StopCommand().execute(arguments: [])
-        guard stopStatus == 0 else { return 1 }
+    func run() throws {
+        guard InstanceControl.stop() == 0 else {
+            throw ExitCode.failure
+        }
 
         var failed = false
 
@@ -37,9 +40,8 @@ struct UninstallCommand: Command {
 
         if failed {
             Console.error("Uninstall incomplete")
-            return 1
+            throw ExitCode.failure
         }
         Console.info("Uninstalled")
-        return 0
     }
 }

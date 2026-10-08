@@ -19,13 +19,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		C0CF5816304F9F810084B891 /* Wallpaper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Wallpaper; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0CF5816304F9F810084B891 /* VideoWallpaper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = VideoWallpaper; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C0CF5818304F9F810084B891 /* Wallpaper */ = {
+		C0CF5818304F9F810084B891 /* VideoWallpaper */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Wallpaper;
+			path = VideoWallpaper;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -44,7 +44,7 @@
 		C0CF580D304F9F810084B891 = {
 			isa = PBXGroup;
 			children = (
-				C0CF5818304F9F810084B891 /* Wallpaper */,
+				C0CF5818304F9F810084B891 /* VideoWallpaper */,
 				C0CF5817304F9F810084B891 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,7 +52,7 @@
 		C0CF5817304F9F810084B891 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C0CF5816304F9F810084B891 /* Wallpaper */,
+				C0CF5816304F9F810084B891 /* VideoWallpaper */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -60,9 +60,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C0CF5815304F9F810084B891 /* Wallpaper */ = {
+		C0CF5815304F9F810084B891 /* VideoWallpaper */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C0CF581D304F9F810084B891 /* Build configuration list for PBXNativeTarget "Wallpaper" */;
+			buildConfigurationList = C0CF581D304F9F810084B891 /* Build configuration list for PBXNativeTarget "VideoWallpaper" */;
 			buildPhases = (
 				C0CF5812304F9F810084B891 /* Sources */,
 				C0CF5813304F9F810084B891 /* Frameworks */,
@@ -73,13 +73,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				C0CF5818304F9F810084B891 /* Wallpaper */,
+				C0CF5818304F9F810084B891 /* VideoWallpaper */,
 			);
-			name = Wallpaper;
+			name = VideoWallpaper;
 			packageProductDependencies = (
+				C0CF5831304F9F810084B891 /* ArgumentParser */,
 			);
-			productName = Wallpaper;
-			productReference = C0CF5816304F9F810084B891 /* Wallpaper */;
+			productName = VideoWallpaper;
+			productReference = C0CF5816304F9F810084B891 /* VideoWallpaper */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -97,7 +98,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C0CF5811304F9F810084B891 /* Build configuration list for PBXProject "Wallpaper" */;
+			buildConfigurationList = C0CF5811304F9F810084B891 /* Build configuration list for PBXProject "VideoWallpaper" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -106,12 +107,15 @@
 			);
 			mainGroup = C0CF580D304F9F810084B891;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C0CF5830304F9F810084B891 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C0CF5817304F9F810084B891 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C0CF5815304F9F810084B891 /* Wallpaper */,
+				C0CF5815304F9F810084B891 /* VideoWallpaper */,
 			);
 		};
 /* End PBXProject section */
@@ -276,7 +280,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C0CF5811304F9F810084B891 /* Build configuration list for PBXProject "Wallpaper" */ = {
+		C0CF5811304F9F810084B891 /* Build configuration list for PBXProject "VideoWallpaper" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C0CF581B304F9F810084B891 /* Debug */,
@@ -285,7 +289,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C0CF581D304F9F810084B891 /* Build configuration list for PBXNativeTarget "Wallpaper" */ = {
+		C0CF581D304F9F810084B891 /* Build configuration list for PBXNativeTarget "VideoWallpaper" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C0CF581E304F9F810084B891 /* Debug */,
@@ -295,6 +299,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C0CF5830304F9F810084B891 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-argument-parser";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.8.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C0CF5831304F9F810084B891 /* ArgumentParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0CF5830304F9F810084B891 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
+			productName = ArgumentParser;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C0CF580E304F9F810084B891 /* Project object */;
 }

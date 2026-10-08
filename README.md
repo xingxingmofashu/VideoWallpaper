@@ -5,8 +5,8 @@
 **Loop a video as your macOS desktop wallpaper from the terminal.**
 
 <p align="center">
-  <a href="https://github.com/xingxingmofashu/Wallpaper/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/xingxingmofashu/Wallpaper?style=flat-square" /></a>
-  <a href="https://github.com/xingxingmofashu/Wallpaper/actions/workflows/ci.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/xingxingmofashu/Wallpaper/ci.yml?style=flat-square&branch=main" /></a>
+  <a href="https://github.com/xingxingmofashu/VideoWallpaper/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/xingxingmofashu/VideoWallpaper?style=flat-square" /></a>
+  <a href="https://github.com/xingxingmofashu/VideoWallpaper/actions/workflows/ci.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/xingxingmofashu/VideoWallpaper/ci.yml?style=flat-square&branch=main" /></a>
 </p>
 
 <p align="center">
@@ -50,14 +50,14 @@ vw stop                            # stop
 One line, no clone needed (downloads the latest release):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/xingxingmofashu/Wallpaper.git
-cd Wallpaper
+git clone https://github.com/xingxingmofashu/VideoWallpaper.git
+cd VideoWallpaper
 ./Scripts/install.sh
 ```
 
@@ -71,7 +71,7 @@ Uninstall:
 ```bash
 vw uninstall                                         # using the installed CLI
 ./Scripts/install.sh --uninstall                    # from a clone
-curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scripts/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash -s -- --uninstall
 ```
 
 ## Usage
@@ -111,6 +111,20 @@ vw run ~/Videos/wallpapers --shuffle                    # every video in a folde
 vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # disable auto-exit guards
 ```
 
+### Shell completions
+
+The CLI is built on [swift-argument-parser](https://github.com/apple/swift-argument-parser),
+so it generates its own completion scripts. For zsh:
+
+```bash
+mkdir -p ~/.zsh/completions
+vw --generate-completion-script zsh > ~/.zsh/completions/_vw
+```
+
+Make sure `~/.zsh/completions` is on your `fpath` and run `compinit`, then restart the
+shell. `bash` and `fish` work the same way. Every subcommand documents itself with
+`vw <command> --help`, and `vw --version` prints the version.
+
 ## How it works
 
 - `vw run` re-executes itself via `posix_spawn` with `POSIX_SPAWN_SETSID`: the daemon
@@ -149,8 +163,8 @@ vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # disable auto-exit guard
 ## Development
 
 ```bash
-xcodebuild -project Wallpaper.xcodeproj -scheme Wallpaper -configuration Debug build
+xcodebuild -project VideoWallpaper.xcodeproj -scheme VideoWallpaper -configuration Debug build
 ```
 
-Source layout: `Wallpaper/CLI` (command dispatch and subcommands), `Wallpaper/Core`
+Source layout: `VideoWallpaper/CLI` (the root command and its subcommands), `VideoWallpaper/Core`
 (playback engine, daemonization, PID/lock files, signal handling).

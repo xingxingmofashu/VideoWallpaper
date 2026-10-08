@@ -5,8 +5,8 @@
 **在终端里把一段循环视频设为 macOS 桌面壁纸。**
 
 <p align="center">
-  <a href="https://github.com/xingxingmofashu/Wallpaper/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/xingxingmofashu/Wallpaper?style=flat-square" /></a>
-  <a href="https://github.com/xingxingmofashu/Wallpaper/actions/workflows/ci.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/xingxingmofashu/Wallpaper/ci.yml?style=flat-square&branch=main" /></a>
+  <a href="https://github.com/xingxingmofashu/VideoWallpaper/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/xingxingmofashu/VideoWallpaper?style=flat-square" /></a>
+  <a href="https://github.com/xingxingmofashu/VideoWallpaper/actions/workflows/ci.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/xingxingmofashu/VideoWallpaper/ci.yml?style=flat-square&branch=main" /></a>
 </p>
 
 <p align="center">
@@ -50,14 +50,14 @@ vw stop                            # 停止
 一行命令，无需 clone（自动下载最新 Release）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash
 ```
 
 或从源码构建：
 
 ```bash
-git clone https://github.com/xingxingmofashu/Wallpaper.git
-cd Wallpaper
+git clone https://github.com/xingxingmofashu/VideoWallpaper.git
+cd VideoWallpaper
 ./Scripts/install.sh
 ```
 
@@ -70,7 +70,7 @@ cd Wallpaper
 ```bash
 vw uninstall                                         # 使用已安装的 vw
 ./Scripts/install.sh --uninstall                    # 在克隆的仓库内
-curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scripts/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash -s -- --uninstall
 ```
 
 ## 使用
@@ -110,6 +110,20 @@ vw run ~/Videos/wallpapers --shuffle                   # 依次播放目录内�
 vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # 关闭自动退出保护
 ```
 
+### Shell 补全
+
+CLI 基于 [swift-argument-parser](https://github.com/apple/swift-argument-parser) 构建，
+可以自己生成补全脚本。以 zsh 为例：
+
+```bash
+mkdir -p ~/.zsh/completions
+vw --generate-completion-script zsh > ~/.zsh/completions/_vw
+```
+
+确认 `~/.zsh/completions` 已在 `fpath` 中并执行 `compinit`，然后重启 shell。
+bash 和 fish 同理。每个子命令都可以用 `vw <命令> --help` 查看用法，
+`vw --version` 打印版本号。
+
 ## 工作原理
 
 - `vw run` 通过 `posix_spawn`（`POSIX_SPAWN_SETSID`）重新执行自身：守护进程脱离
@@ -145,8 +159,8 @@ vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # 关闭自动退出保�
 ## 开发
 
 ```bash
-xcodebuild -project Wallpaper.xcodeproj -scheme Wallpaper -configuration Debug build
+xcodebuild -project VideoWallpaper.xcodeproj -scheme VideoWallpaper -configuration Debug build
 ```
 
-源码结构：`Wallpaper/CLI`（命令分发与子命令），`Wallpaper/Core`（播放引擎、
+源码结构：`VideoWallpaper/CLI`（根命令与各子命令），`VideoWallpaper/Core`（播放引擎、
 守护进程化、PID/锁文件、信号处理）。
