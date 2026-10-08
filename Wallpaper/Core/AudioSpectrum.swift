@@ -18,8 +18,6 @@ final class AudioSpectrum {
     private static let maximumCeilingDecibels: Float = -6
     private static let springOmega: Float = 17
     private static let subSteps = 4
-    private static let peakFall: Float = 0.012
-    private static let peakHoldFrames = 18
 
     private var lock = os_unfair_lock_s()
     private var pending = [Float](repeating: 0, count: AudioSpectrum.fftSize * 2)
@@ -44,8 +42,6 @@ final class AudioSpectrum {
     private var velocities = [Float](repeating: 0, count: AudioSpectrum.bandCount)
     private var targets = [Float](repeating: 0, count: AudioSpectrum.bandCount)
     private var smoothed = [Float](repeating: 0, count: AudioSpectrum.bandCount)
-    private var peaks = [Float](repeating: 0, count: AudioSpectrum.bandCount)
-    private var peakHold = [Int](repeating: 0, count: AudioSpectrum.bandCount)
     private var adaptiveMax: Float = 0.0001
 
     private var taps: [ObjectIdentifier: MTAudioProcessingTap] = [:]
@@ -132,13 +128,13 @@ final class AudioSpectrum {
         os_unfair_lock_unlock(&lock)
     }
 
-    func advance(active: Bool) -> ([Float], [Float]) {
+    func advance(active: Bool) -> [Float] {
         let rate = sampleRate.load(ordering: .relaxed)
         if bandRanges.isEmpty, rate > 0 {
             buildBandRanges(sampleRate: rate)
         }
         guard let fftSetup, !bandRanges.isEmpty else {
-            return (values, peaks)
+            return values
         }
 
         os_unfair_lock_lock(&lock)
@@ -162,7 +158,7 @@ final class AudioSpectrum {
             analyse(fftSetup)
         }
         stepSprings(active: active)
-        return (values, peaks)
+        return values
     }
 
     private func analyse(_ setup: vDSP_DFT_Setup) {
@@ -239,15 +235,6 @@ final class AudioSpectrum {
             value = min(max(value, 0), 1.2)
             values[index] = value
             velocities[index] = velocity
-
-            if value >= peaks[index] {
-                peaks[index] = value
-                peakHold[index] = AudioSpectrum.peakHoldFrames
-            } else if peakHold[index] > 0 {
-                peakHold[index] -= 1
-            } else {
-                peaks[index] = max(value, peaks[index] - AudioSpectrum.peakFall)
-            }
         }
     }
 
