@@ -224,7 +224,7 @@ download_and_install() {
     print_message info "\n${MUTED}Installing ${NC}$APP ${MUTED}version: ${NC}$version"
     local tmp_dir="${TMPDIR:-/tmp}/vw_install_$$"
     mkdir -p "$tmp_dir"
-    trap 'rm -rf "$tmp_dir"' EXIT
+    trap "rm -rf '$tmp_dir'" EXIT
 
     if ! [ -t 2 ] || ! download_with_progress "$url" "$tmp_dir/$ASSET"; then
         curl -f -# -L -o "$tmp_dir/$ASSET" "$url" \
