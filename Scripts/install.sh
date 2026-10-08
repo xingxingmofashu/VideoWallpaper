@@ -5,7 +5,7 @@
 #   Scripts/install.sh                       Build (Release) and install from this repo
 #   Scripts/install.sh --uninstall           Stop the instance and remove installed files
 #   VW_PREFIX=/some/dir Scripts/install.sh   Install to a custom prefix
-#   curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash
 #                                            Download the latest release and install (no clone needed)
 #   VW_VERSION=v1.0.0 <command above>        Install a specific release instead of latest
 #
@@ -16,7 +16,7 @@
 #   4. /usr/local/bin      via sudo (will prompt for password)
 set -euo pipefail
 
-REPO="xingxingmofashu/Wallpaper"
+REPO="xingxingmofashu/VideoWallpaper"
 APP_DIR="$HOME/.vw"
 
 resolve_dest() {
@@ -70,16 +70,16 @@ install_binary() {
     echo "  vw help                         Show full help"
 }
 
-if [ -d "$(dirname "$0")/../Wallpaper.xcodeproj" ]; then
+if [ -d "$(dirname "$0")/../VideoWallpaper.xcodeproj" ]; then
     command -v xcodebuild >/dev/null 2>&1 \
         || { echo "error: xcodebuild not found, please install Xcode first" >&2; exit 1; }
 
     ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-    PROJECT="$ROOT/Wallpaper.xcodeproj"
-    BUILT="$ROOT/build/Build/Products/Release/Wallpaper"
+    PROJECT="$ROOT/VideoWallpaper.xcodeproj"
+    BUILT="$ROOT/build/Build/Products/Release/VideoWallpaper"
 
     echo "Building (Release)..."
-    xcodebuild -project "$PROJECT" -scheme Wallpaper -configuration Release \
+    xcodebuild -project "$PROJECT" -scheme VideoWallpaper -configuration Release \
         build -derivedDataPath "$ROOT/build" -quiet
     [ -f "$BUILT" ] || { echo "error: build product not found at $BUILT" >&2; exit 1; }
 

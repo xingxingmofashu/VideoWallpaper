@@ -12,4 +12,4 @@ jobs:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
-      - run: xcodebuild -project Wallpaper.xcodeproj -scheme Wallpaper -configuration Release build -derivedDataPath build -quiet CODE_SIGNING_ALLOWED=NO
+      - run: xcodebuild -project VideoWallpaper.xcodeproj -scheme VideoWallpaper -configuration Release build -derivedDataPath build -quiet CODE_SIGNING_ALLOWED=NO

@@ -5,8 +5,8 @@
 **Loop a video as your macOS desktop wallpaper from the terminal.**
 
 <p align="center">
-  <a href="https://github.com/xingxingmofashu/Wallpaper/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/xingxingmofashu/Wallpaper?style=flat-square" /></a>
-  <a href="https://github.com/xingxingmofashu/Wallpaper/actions/workflows/ci.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/xingxingmofashu/Wallpaper/ci.yml?style=flat-square&branch=main" /></a>
+  <a href="https://github.com/xingxingmofashu/VideoWallpaper/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/xingxingmofashu/VideoWallpaper?style=flat-square" /></a>
+  <a href="https://github.com/xingxingmofashu/VideoWallpaper/actions/workflows/ci.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/xingxingmofashu/VideoWallpaper/ci.yml?style=flat-square&branch=main" /></a>
 </p>
 
 <p align="center">
@@ -50,14 +50,14 @@ vw stop                            # stop
 One line, no clone needed (downloads the latest release):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/xingxingmofashu/Wallpaper.git
-cd Wallpaper
+git clone https://github.com/xingxingmofashu/VideoWallpaper.git
+cd VideoWallpaper
 ./Scripts/install.sh
 ```
 
@@ -71,7 +71,7 @@ Uninstall:
 ```bash
 vw uninstall                                         # using the installed CLI
 ./Scripts/install.sh --uninstall                    # from a clone
-curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/Wallpaper/main/Scripts/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash -s -- --uninstall
 ```
 
 ## Usage
@@ -163,8 +163,8 @@ shell. `bash` and `fish` work the same way. Every subcommand documents itself wi
 ## Development
 
 ```bash
-xcodebuild -project Wallpaper.xcodeproj -scheme Wallpaper -configuration Debug build
+xcodebuild -project VideoWallpaper.xcodeproj -scheme VideoWallpaper -configuration Debug build
 ```
 
-Source layout: `Wallpaper/CLI` (command dispatch and subcommands), `Wallpaper/Core`
+Source layout: `VideoWallpaper/CLI` (the root command and its subcommands), `VideoWallpaper/Core`
 (playback engine, daemonization, PID/lock files, signal handling).

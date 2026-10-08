@@ -15,7 +15,7 @@ jobs:
 
       - name: Verify tag matches Version.number
         run: |
-          version=$(grep 'static let number' Wallpaper/CLI/Commands/VersionCommand.swift | sed 's/.*= "\(.*\)"/\1/')
+          version=$(grep 'static let number' VideoWallpaper/CLI/Commands/VersionCommand.swift | sed 's/.*= "\(.*\)"/\1/')
           tag="${GITHUB_REF_NAME#v}"
           if [ "$version" != "$tag" ]; then
             echo "error: tag $GITHUB_REF_NAME does not match Version.number $version" >&2
@@ -23,11 +23,11 @@ jobs:
           fi
 
       - name: Build (Release)
-        run: xcodebuild -project Wallpaper.xcodeproj -scheme Wallpaper -configuration Release build -derivedDataPath build -quiet CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild -project VideoWallpaper.xcodeproj -scheme VideoWallpaper -configuration Release build -derivedDataPath build -quiet CODE_SIGNING_ALLOWED=NO
 
       - name: Package
         run: |
-          cp build/Build/Products/Release/Wallpaper vw
+          cp build/Build/Products/Release/VideoWallpaper vw
           codesign -f -s - vw
           codesign -v vw
           tar -czf vw-macos-arm64.tar.gz vw
