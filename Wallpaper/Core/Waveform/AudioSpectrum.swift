@@ -16,7 +16,7 @@ final class AudioSpectrum {
     private static let dynamicRangeDecibels: Float = 40
     private static let responseCurve: Float = 1.25
     private static let maximumCeilingDecibels: Float = -6
-    private static let springOmega: Float = 17
+    private static let springOmega: Float = 15
     private static let subSteps = 4
 
     private var lock = os_unfair_lock_s()
@@ -128,7 +128,7 @@ final class AudioSpectrum {
         os_unfair_lock_unlock(&lock)
     }
 
-    func advance(active: Bool) -> [Float] {
+    func advance(active: Bool, dt: Float) -> [Float] {
         let rate = sampleRate.load(ordering: .relaxed)
         if bandRanges.isEmpty, rate > 0 {
             buildBandRanges(sampleRate: rate)
@@ -157,7 +157,7 @@ final class AudioSpectrum {
         if filled >= AudioSpectrum.fftSize {
             analyse(fftSetup)
         }
-        stepSprings(active: active)
+        stepSprings(active: active, dt: dt)
         return values
     }
 
@@ -220,8 +220,8 @@ final class AudioSpectrum {
         }
     }
 
-    private func stepSprings(active: Bool) {
-        let step = (1.0 / 30.0) / Float(AudioSpectrum.subSteps)
+    private func stepSprings(active: Bool, dt: Float) {
+        let step = dt / Float(AudioSpectrum.subSteps)
         for index in 0..<AudioSpectrum.bandCount {
             let goal = active ? smoothed[index] : 0
             var value = values[index]

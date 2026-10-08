@@ -1,12 +1,6 @@
 import SwiftUI
-import Combine
 
-final class SpectrumStore: ObservableObject {
-    @Published var bands: [Float] = []
-    @Published var visible = false
-}
-
-struct GlassSpectrumView: View {
+struct SpectrumView: View {
     static let verticalPosition: CGFloat = 0.68
     static let widthRatio: CGFloat = 0.48
     static let heightRatio: CGFloat = 0.14
@@ -17,6 +11,11 @@ struct GlassSpectrumView: View {
     static let barWidthRatio: CGFloat = 0.42
     static let horizontalInset: CGFloat = 44
     static let minimumBarHeight: CGFloat = 2
+    static let shadowOpacity: Double = 0.45
+    static let shadowRadius: CGFloat = 10
+    static let edgeOpacity: Double = 0.45
+    static let centreOpacity: Double = 0.95
+    static let fadeDuration: Double = 0.35
 
     static func panelSize(in bounds: CGSize) -> CGSize {
         let width = min(max(bounds.width * widthRatio, minimumWidth), maximumWidth)
@@ -32,9 +31,9 @@ struct GlassSpectrumView: View {
             draw(in: &context, size: size)
         }
         .frame(width: panelSize.width, height: panelSize.height)
-        .shadow(color: Color.black.opacity(0.45), radius: 10, y: 1)
+        .shadow(color: Color.black.opacity(Self.shadowOpacity), radius: Self.shadowRadius, y: 1)
         .opacity(store.visible ? 1 : 0)
-        .animation(.easeInOut(duration: 0.35), value: store.visible)
+        .animation(.easeInOut(duration: Self.fadeDuration), value: store.visible)
     }
 
     private func draw(in context: inout GraphicsContext, size: CGSize) {
@@ -46,20 +45,19 @@ struct GlassSpectrumView: View {
         let slot = innerWidth / CGFloat(count)
         let barWidth = max(2, slot * Self.barWidthRatio)
         let baseline = size.height
-        let maxHeight = size.height
 
         var bars = Path()
         for index in 0..<count {
             let x = inset + slot * CGFloat(index) + (slot - barWidth) / 2
-            let height = max(Self.minimumBarHeight, maxHeight * CGFloat(min(store.bands[index], 1)))
+            let height = max(Self.minimumBarHeight, size.height * CGFloat(min(store.bands[index], 1)))
             bars.addRect(CGRect(x: x, y: baseline - height, width: barWidth, height: height))
         }
 
         context.fill(bars, with: .linearGradient(
             Gradient(colors: [
-                Color.white.opacity(0.45),
-                Color.white.opacity(0.95),
-                Color.white.opacity(0.45),
+                Color.white.opacity(Self.edgeOpacity),
+                Color.white.opacity(Self.centreOpacity),
+                Color.white.opacity(Self.edgeOpacity),
             ]),
             startPoint: CGPoint(x: 0, y: 0),
             endPoint: CGPoint(x: size.width, y: 0)))

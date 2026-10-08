@@ -74,7 +74,7 @@ struct RunCommand: Command {
           --shuffle             Play the videos in random order (default: filename order)
           --rate <0.1-1.0>      Max playback rate to lower CPU/GPU load (default: 1.0)
           --volume <0.0-1.0>    Audio volume; 0 keeps it silent (default: 0)
-          --waveform            Show an audio spectrum panel in the middle of the desktop
+          --waveform            Show audio spectrum bars across the lower desktop
           --stall <seconds>     Auto-exit when playback stalls or never starts within this long, 0 disables (default: 8, max 86400)
           --watchdog <seconds>  Auto-exit if UI is unresponsive this long, 0 disables (default: 6, max 86400)
 
