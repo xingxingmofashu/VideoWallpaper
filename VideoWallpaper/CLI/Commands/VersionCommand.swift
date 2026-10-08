@@ -1,7 +1,7 @@
 import ArgumentParser
 
 enum Version {
-    static let number = "1.3.2"
+    static let number = "1.4.0"
     static let name = "vw"
     static let full = "\(name) \(number)"
 }
