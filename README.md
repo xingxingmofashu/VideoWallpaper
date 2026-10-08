@@ -82,6 +82,7 @@ vw stop                    stop the running instance
 vw mute                    mute the running instance's audio
 vw unmute                  unmute the running instance's audio
 vw waveform on|off         turn the desktop waveform on or off
+vw waveform color          switch the waveform color (default|gradient)
 vw uninstall               stop the instance, remove the binary and runtime data
 vw version                 show version
 vw help                    show full help

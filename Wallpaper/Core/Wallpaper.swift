@@ -293,6 +293,10 @@ final class Wallpaper: NSObject {
         spectrumStore.bands = spectrum.advance(active: !player.isMuted, dt: Float(Self.waveformInterval))
     }
 
+    func setSpectrumColor(_ color: SpectrumColor) {
+        spectrumStore.color = color
+    }
+
     func setWaveform(_ enabled: Bool) {
         guard waveformEnabled != enabled else { return }
         waveformEnabled = enabled
@@ -339,12 +343,12 @@ final class Wallpaper: NSObject {
         let panel = SpectrumView.panelSize(in: bounds.size)
         let padding: CGFloat = 48
         let hostSize = CGSize(width: panel.width + padding * 2, height: panel.height + padding * 2)
-        let centreY = bounds.height * (1 - SpectrumView.verticalPosition)
+        let centerY = bounds.height * (1 - SpectrumView.verticalPosition)
         let host = NSHostingView(rootView: SpectrumView(store: spectrumStore, panelSize: panel))
         host.layer?.backgroundColor = NSColor.clear.cgColor
         host.frame = CGRect(
             x: (bounds.width - hostSize.width) / 2,
-            y: centreY - hostSize.height / 2,
+            y: centerY - hostSize.height / 2,
             width: hostSize.width,
             height: hostSize.height)
         contentView.addSubview(host)

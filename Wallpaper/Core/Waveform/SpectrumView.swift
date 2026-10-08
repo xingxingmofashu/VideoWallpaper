@@ -1,5 +1,30 @@
 import SwiftUI
 
+enum SpectrumColor {
+    case white
+    case gradient
+
+    static func named(_ argument: String) -> SpectrumColor? {
+        switch argument {
+        case "default", "white":
+            return .white
+        case "gradient":
+            return .gradient
+        default:
+            return nil
+        }
+    }
+
+    var name: String {
+        switch self {
+        case .white:
+            return "default"
+        case .gradient:
+            return "gradient"
+        }
+    }
+}
+
 struct SpectrumView: View {
     static let verticalPosition: CGFloat = 0.68
     static let widthRatio: CGFloat = 0.48
@@ -14,8 +39,16 @@ struct SpectrumView: View {
     static let shadowOpacity: Double = 0.45
     static let shadowRadius: CGFloat = 10
     static let edgeOpacity: Double = 0.45
-    static let centreOpacity: Double = 0.95
+    static let centerOpacity: Double = 0.95
+    static let gradientOpacity: Double = 0.9
     static let fadeDuration: Double = 0.35
+    static let gradientColors = [
+        Color(red: 1.0, green: 0.353, blue: 0.235),
+        Color(red: 1.0, green: 0.643, blue: 0.235),
+        Color(red: 0.169, green: 0.878, blue: 0.722),
+        Color(red: 0.275, green: 0.663, blue: 1.0),
+        Color(red: 0.702, green: 0.420, blue: 1.0),
+    ]
 
     static func panelSize(in bounds: CGSize) -> CGSize {
         let width = min(max(bounds.width * widthRatio, minimumWidth), maximumWidth)
@@ -53,13 +86,23 @@ struct SpectrumView: View {
             bars.addRect(CGRect(x: x, y: baseline - height, width: barWidth, height: height))
         }
 
-        context.fill(bars, with: .linearGradient(
-            Gradient(colors: [
-                Color.white.opacity(Self.edgeOpacity),
-                Color.white.opacity(Self.centreOpacity),
-                Color.white.opacity(Self.edgeOpacity),
-            ]),
-            startPoint: CGPoint(x: 0, y: 0),
-            endPoint: CGPoint(x: size.width, y: 0)))
+        let start = CGPoint(x: inset, y: 0)
+        let end = CGPoint(x: size.width - inset, y: 0)
+        switch store.color {
+        case .white:
+            context.fill(bars, with: .linearGradient(
+                Gradient(colors: [
+                    Color.white.opacity(Self.edgeOpacity),
+                    Color.white.opacity(Self.centerOpacity),
+                    Color.white.opacity(Self.edgeOpacity),
+                ]),
+                startPoint: start,
+                endPoint: end))
+        case .gradient:
+            context.fill(bars, with: .linearGradient(
+                Gradient(colors: Self.gradientColors.map { $0.opacity(Self.gradientOpacity) }),
+                startPoint: start,
+                endPoint: end))
+        }
     }
 }

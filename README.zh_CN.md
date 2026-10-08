@@ -81,6 +81,7 @@ vw stop                停止当前实例
 vw mute                静音当前实例
 vw unmute              取消静音当前实例
 vw waveform on|off     开/关桌面波形
+vw waveform color      切换波形颜色（default|gradient）
 vw uninstall           停止实例并删除二进制与运行数据
 vw version             显示版本
 vw help                显示完整帮助

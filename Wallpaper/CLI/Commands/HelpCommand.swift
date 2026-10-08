@@ -31,6 +31,7 @@ struct HelpCommand: Command {
         lines.append("  \(Version.name) run ~/Videos/wallpaper.mov")
         lines.append("  \(Version.name) run ~/Videos/wallpapers --shuffle")
         lines.append("  \(Version.name) run video.mov --single --rate 0.5")
+        lines.append("  \(Version.name) waveform color gradient")
         return lines.joined(separator: "\n")
     }
 }

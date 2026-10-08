@@ -274,7 +274,15 @@ struct RunCommand: Command {
                 wallpaper.setWaveform(false)
                 return "Waveform off"
             default:
-                return "Unknown command"
+                let prefix = "waveform color "
+                guard command.hasPrefix(prefix) else {
+                    return "Unknown command"
+                }
+                guard let color = SpectrumColor.named(String(command.dropFirst(prefix.count))) else {
+                    return "Unknown color"
+                }
+                wallpaper.setSpectrumColor(color)
+                return "Waveform color: \(color.name)"
             }
         }
         if control == nil {
