@@ -289,9 +289,7 @@ final class Wallpaper: NSObject {
 
     private func tickWaveform() {
         guard isRunning, waveformEnabled, let spectrum else { return }
-        let (bands, peaks) = spectrum.advance(active: !player.isMuted)
-        spectrumStore.bands = bands
-        spectrumStore.peaks = peaks
+        spectrumStore.bands = spectrum.advance(active: !player.isMuted)
     }
 
     func setWaveform(_ enabled: Bool) {
@@ -318,7 +316,6 @@ final class Wallpaper: NSObject {
             observedItem = nil
             spectrumStore.visible = false
             spectrumStore.bands = []
-            spectrumStore.peaks = []
         }
     }
 
