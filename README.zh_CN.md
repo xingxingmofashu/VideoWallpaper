@@ -68,10 +68,11 @@ cd VideoWallpaper
 卸载：
 
 ```bash
-vw uninstall                                         # 使用已安装的 vw
-./Scripts/install.sh --uninstall                    # 在克隆的仓库内
-curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash -s -- --uninstall
+vw uninstall
 ```
+
+它会停止运行中的实例、删除已安装的二进制并清理 `~/.vw`。如果二进制所在目录不可写
+（例如用 sudo 安装到 `/usr/local/bin`），它会打印需要手动执行的 `sudo rm` 命令。
 
 ## 使用
 
