@@ -1,10 +1,14 @@
-import Foundation
+import ArgumentParser
 
-struct UnmuteCommand: Command {
-    let name = "unmute"
-    let summary = "Unmute the running instance"
+struct UnmuteCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "unmute",
+        abstract: "Unmute the running instance")
 
-    func execute(arguments: [String]) -> Int32 {
-        ControlClient.send("unmute")
+    func run() throws {
+        let status = ControlClient.send("unmute")
+        if status != 0 {
+            throw ExitCode(status)
+        }
     }
 }

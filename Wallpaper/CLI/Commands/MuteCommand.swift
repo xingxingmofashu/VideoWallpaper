@@ -1,10 +1,14 @@
-import Foundation
+import ArgumentParser
 
-struct MuteCommand: Command {
-    let name = "mute"
-    let summary = "Mute the running instance"
+struct MuteCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "mute",
+        abstract: "Mute the running instance")
 
-    func execute(arguments: [String]) -> Int32 {
-        ControlClient.send("mute")
+    func run() throws {
+        let status = ControlClient.send("mute")
+        if status != 0 {
+            throw ExitCode(status)
+        }
     }
 }

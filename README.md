@@ -111,6 +111,20 @@ vw run ~/Videos/wallpapers --shuffle                    # every video in a folde
 vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # disable auto-exit guards
 ```
 
+### Shell completions
+
+The CLI is built on [swift-argument-parser](https://github.com/apple/swift-argument-parser),
+so it generates its own completion scripts. For zsh:
+
+```bash
+mkdir -p ~/.zsh/completions
+vw --generate-completion-script zsh > ~/.zsh/completions/_vw
+```
+
+Make sure `~/.zsh/completions` is on your `fpath` and run `compinit`, then restart the
+shell. `bash` and `fish` work the same way. Every subcommand documents itself with
+`vw <command> --help`, and `vw --version` prints the version.
+
 ## How it works
 
 - `vw run` re-executes itself via `posix_spawn` with `POSIX_SPAWN_SETSID`: the daemon

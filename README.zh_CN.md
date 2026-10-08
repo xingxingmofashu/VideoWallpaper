@@ -110,6 +110,20 @@ vw run ~/Videos/wallpapers --shuffle                   # 依次播放目录内�
 vw run ~/Videos/wallpaper.mov --stall 0 --watchdog 0   # 关闭自动退出保护
 ```
 
+### Shell 补全
+
+CLI 基于 [swift-argument-parser](https://github.com/apple/swift-argument-parser) 构建，
+可以自己生成补全脚本。以 zsh 为例：
+
+```bash
+mkdir -p ~/.zsh/completions
+vw --generate-completion-script zsh > ~/.zsh/completions/_vw
+```
+
+确认 `~/.zsh/completions` 已在 `fpath` 中并执行 `compinit`，然后重启 shell。
+bash 和 fish 同理。每个子命令都可以用 `vw <命令> --help` 查看用法，
+`vw --version` 打印版本号。
+
 ## 工作原理
 
 - `vw run` 通过 `posix_spawn`（`POSIX_SPAWN_SETSID`）重新执行自身：守护进程脱离

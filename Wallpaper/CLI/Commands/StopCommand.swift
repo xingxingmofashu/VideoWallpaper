@@ -1,10 +1,8 @@
+import ArgumentParser
 import Foundation
 
-struct StopCommand: Command {
-    let name = "stop"
-    let summary = "Stop the running instance"
-
-    func execute(arguments: [String]) -> Int32 {
+enum InstanceControl {
+    static func stop() -> Int32 {
         let pidFile = PIDFile.shared
         guard let pid = pidFile.pid else {
             Console.info("No running instance")
@@ -31,5 +29,18 @@ struct StopCommand: Command {
 
         Console.error("Process \(pid) did not exit within 3s, try `kill -9 \(pid)`")
         return 1
+    }
+}
+
+struct StopCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "stop",
+        abstract: "Stop the running instance")
+
+    func run() throws {
+        let status = InstanceControl.stop()
+        if status != 0 {
+            throw ExitCode(status)
+        }
     }
 }

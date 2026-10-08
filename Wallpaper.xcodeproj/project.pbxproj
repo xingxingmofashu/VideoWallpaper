@@ -77,6 +77,7 @@
 			);
 			name = Wallpaper;
 			packageProductDependencies = (
+				C0CF5831304F9F810084B891 /* ArgumentParser */,
 			);
 			productName = Wallpaper;
 			productReference = C0CF5816304F9F810084B891 /* Wallpaper */;
@@ -106,6 +107,9 @@
 			);
 			mainGroup = C0CF580D304F9F810084B891;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C0CF5830304F9F810084B891 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C0CF5817304F9F810084B891 /* Products */;
 			projectDirPath = "";
@@ -295,6 +299,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C0CF5830304F9F810084B891 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-argument-parser";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.8.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C0CF5831304F9F810084B891 /* ArgumentParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0CF5830304F9F810084B891 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
+			productName = ArgumentParser;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C0CF580E304F9F810084B891 /* Project object */;
 }

@@ -1,4 +1,4 @@
-import Foundation
+import ArgumentParser
 
 enum Version {
     static let number = "1.3.2"
@@ -6,12 +6,12 @@ enum Version {
     static let full = "\(name) \(number)"
 }
 
-struct VersionCommand: Command {
-    let name = "version"
-    let summary = "Show version"
+struct VersionCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "version",
+        abstract: "Show version")
 
-    func execute(arguments: [String]) -> Int32 {
+    func run() {
         Console.info(Version.full)
-        return 0
     }
 }

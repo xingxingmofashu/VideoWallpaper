@@ -1,32 +1,65 @@
-import Foundation
+import ArgumentParser
 
-struct WaveformCommand: Command {
-    let name = "waveform"
-    let summary = "Turn the desktop waveform on or off, or switch its color"
+struct WaveformCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "waveform",
+        abstract: "Turn the desktop waveform on or off, or switch its color",
+        subcommands: [On.self, Off.self, Color.self])
 
-    func execute(arguments: [String]) -> Int32 {
-        guard let mode = arguments.first else {
-            return usage()
-        }
-        switch mode {
-        case "on", "off":
-            guard arguments.count == 1 else {
-                return usage()
+    func run() throws {
+        throw CleanExit.helpRequest(self)
+    }
+
+    struct On: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "on",
+            abstract: "Turn the desktop waveform on")
+
+        func run() throws {
+            let status = ControlClient.send("waveform on")
+            if status != 0 {
+                throw ExitCode(status)
             }
-            return ControlClient.send("waveform \(mode)")
-        case "color":
-            guard arguments.count == 2, SpectrumColor.named(arguments[1]) != nil else {
-                return usage()
-            }
-            return ControlClient.send("waveform color \(arguments[1])")
-        default:
-            return usage()
         }
     }
 
-    private func usage() -> Int32 {
-        Console.error("Usage: \(Version.name) waveform on|off")
-        Console.error("       \(Version.name) waveform color default|gradient")
-        return 1
+    struct Off: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "off",
+            abstract: "Turn the desktop waveform off")
+
+        func run() throws {
+            let status = ControlClient.send("waveform off")
+            if status != 0 {
+                throw ExitCode(status)
+            }
+        }
+    }
+
+    struct Color: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "color",
+            abstract: "Switch the waveform color")
+
+        @Argument(help: "The waveform color.")
+        var color: SpectrumColor
+
+        func run() throws {
+            let status = ControlClient.send("waveform color \(color.name)")
+            if status != 0 {
+                throw ExitCode(status)
+            }
+        }
+    }
+}
+
+extension SpectrumColor: ExpressibleByArgument {
+    init?(argument: String) {
+        guard let value = SpectrumColor.named(argument) else { return nil }
+        self = value
+    }
+
+    static var allValueStrings: [String] {
+        ["default", "gradient"]
     }
 }
