@@ -36,3 +36,36 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" vw-macos-arm64.tar.gz --generate-notes --title "$GITHUB_REF_NAME"
+
+      - name: Bump the Homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          if [ -z "${TAP_TOKEN:-}" ]; then
+            echo "TAP_TOKEN is not set, skipping the tap bump"
+            exit 0
+          fi
+
+          sha=$(shasum -a 256 vw-macos-arm64.tar.gz | awk '{print $1}')
+          version="${GITHUB_REF_NAME#v}"
+          tap="$RUNNER_TEMP/tap"
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/xingxingmofashu/homebrew-tap.git" "$tap"
+          cd "$tap"
+
+          ruby -e '
+            path = "Formula/vw.rb"
+            text = File.read(path)
+            text = text.sub(%r{/download/v[^/]+/}, "/download/v#{ARGV[0]}/")
+            text = text.sub(/sha256 "[0-9a-f]+"/, "sha256 \"#{ARGV[1]}\"")
+            File.write(path, text)
+          ' "$version" "$sha"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/vw.rb
+          if git diff --cached --quiet; then
+            echo "Formula already points at v$version"
+            exit 0
+          fi
+          git commit -m "vw $version"
+          git push

@@ -47,13 +47,19 @@ vw stop                            # 停止
 
 ## 安装
 
-一行命令，无需 clone（自动下载最新 Release）：
+使用 Homebrew（推荐）：
+
+```bash
+brew install xingxingmofashu/tap/vw
+```
+
+使用安装脚本（无需 clone，自动下载最新 Release）：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash
 ```
 
-或从源码构建：
+从源码构建：
 
 ```bash
 git clone https://github.com/xingxingmofashu/VideoWallpaper.git
@@ -61,18 +67,30 @@ cd VideoWallpaper
 ./Scripts/install.sh
 ```
 
-两种方式都会按以下顺序安装到第一个可写位置：`$VW_PREFIX`、`/usr/local/bin`
-（需要时才用 sudo）、`/opt/homebrew/bin`；安装前会先删除旧二进制再复制 ——
-因为原地覆盖已签名的二进制（同 inode）会导致 macOS 在下次启动时直接 SIGKILL。
+安装脚本会把二进制放到 `~/.vw/bin/vw`，并把该目录追加到你的 shell 配置
+（`.zshrc`、`.bashrc`、`config.fish` 等），全程不需要 sudo。
+`--no-modify-path` 可让你自己维护 shell 配置，`--version <v>` 指定版本，
+`--binary <path>` 安装本地构建的二进制。
 
-卸载：
+### 升级
+
+```bash
+vw upgrade                 # 升级到最新 Release
+vw upgrade 1.5.0           # 升级到指定版本
+```
+
+`vw upgrade` 会探测 vw 的安装方式并采用对应机制：Homebrew 安装的走
+`brew upgrade vw`，`~/.vw/bin` 安装的走安装脚本。
+
+### 卸载
 
 ```bash
 vw uninstall
 ```
 
-它会停止运行中的实例、删除已安装的二进制并清理 `~/.vw`。如果二进制所在目录不可写
-（例如用 sudo 安装到 `/usr/local/bin`），它会打印需要手动执行的 `sudo rm` 命令。
+它会停止运行中的实例、删除数据与状态目录、删除二进制，并把 PATH 那一行从 shell
+配置里移除。`--dry-run` 只列出将要删除的内容，`--force` 跳过确认。
+Homebrew 安装的请改用 `brew uninstall vw`。
 
 ## 使用
 
@@ -83,7 +101,8 @@ vw mute                静音当前实例
 vw unmute              取消静音当前实例
 vw waveform on|off     开/关桌面波形
 vw waveform color      切换波形颜色（default|gradient）
-vw uninstall           停止实例并删除二进制与运行数据
+vw upgrade [版本]      升级到最新或指定版本
+vw uninstall           停止实例并删除 vw 及其数据
 vw version             显示版本
 vw help                显示完整帮助
 ```
@@ -129,11 +148,11 @@ bash 和 fish 同理。每个子命令都可以用 `vw <命令> --help` 查看�
 
 - `vw run` 通过 `posix_spawn`（`POSIX_SPAWN_SETSID`）重新执行自身：守护进程脱离
   终端（终端关闭不影响，忽略 SIGHUP），stdin 指向 `/dev/null`，stdout/stderr 追加
-  写入 `~/.vw/vw.log`。
-- 守护进程写入 `~/.vw/vw.pid`；`vw stop` 在发送 `SIGTERM` 前会用 `proc_pidpath`
-  双向比对，确认 PID 确实属于 `vw`，避免误杀无关进程。
-- 守护进程继承 `~/.vw/vw.lock` 上的 `flock`，单实例保证覆盖守护进程的整个生命周期，
-  退出或被杀时锁自动释放。
+  写入 `~/.local/share/vw/vw.log`。
+- 守护进程写入 `~/.local/state/vw/vw.pid`；`vw stop` 在发送 `SIGTERM` 前会用
+  `proc_pidpath` 双向比对，确认 PID 确实属于 `vw`，避免误杀无关进程。
+- 守护进程继承 `~/.local/state/vw/vw.lock` 上的 `flock`，单实例保证覆盖守护进程的
+  整个生命周期，退出或被杀时锁自动释放。
 - 每块屏幕一个无边框 `NSWindow`（桌面窗口层级）+ `AVPlayerLayer`；仅当屏幕配置
   真正变化时才重建窗口。
 - 播放列表用同一个 `AVQueuePlayer` 预置下一段视频，前后无缝衔接；目录会展开为
@@ -141,18 +160,24 @@ bash 和 fish 同理。每个子命令都可以用 `vw <命令> --help` 查看�
 
 ### 运行时文件
 
+全部位于 XDG 目录下；设置了 `$XDG_DATA_HOME` / `$XDG_STATE_HOME` 时以其为准。
+
 | 路径 | 用途 |
 |---|---|
-| `~/.vw/vw.pid` | 守护进程 PID |
-| `~/.vw/vw.lock` | 单实例锁 |
-| `~/.vw/vw.sock` | 运行时控制套接字 |
-| `~/.vw/vw.log` | 守护进程输出/错误（每次启动时清空） |
+| `~/.local/state/vw/vw.pid` | 守护进程 PID |
+| `~/.local/state/vw/vw.lock` | 单实例锁 |
+| `~/.local/state/vw/vw.sock` | 运行时控制套接字 |
+| `~/.local/share/vw/vw.log` | 守护进程输出/错误（每次启动时清空） |
+| `~/.vw/bin/vw` | 安装脚本放置的二进制 |
+
+状态目录以 `0700` 权限创建，因此只有你能连上控制套接字。
 
 ## 常见问题
 
 - `Another instance is running` → 先执行 `vw stop`。
-- 壁纸消失 → daemon 大概率已退出；检查 `ps -p "$(cat ~/.vw/vw.pid)"` 后重新
-  `vw run`，异常退出的原因记录在 `~/.vw/vw.log`。
+- 壁纸消失 → daemon 大概率已退出；检查
+  `ps -p "$(cat ~/.local/state/vw/vw.pid)"` 后重新 `vw run`，异常退出的原因记录在
+  `~/.local/share/vw/vw.log`。
 - **锁屏界面**始终显示系统静态壁纸，这是 macOS 的限制；解锁后桌面视频会继续播放。
 - 若用**浏览器**下载二进制（而非 curl），macOS Gatekeeper 可能拦截（quarantine 标记）；
   用 `xattr -d com.apple.quarantine <文件>` 清除，或改用 curl 方式安装。

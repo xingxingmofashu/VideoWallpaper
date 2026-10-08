@@ -149,14 +149,14 @@ struct RunCommand: ParsableCommand {
 
     private func startDetached(urls: [URL], options: RunOptions) -> Int32 {
         let pidFile = PIDFile.shared
-        let dataDir = pidFile.url.deletingLastPathComponent()
-        let logURL = dataDir.appendingPathComponent("vw.log")
-        let lockURL = dataDir.appendingPathComponent("vw.lock")
+        let logURL = Paths.log
+        let lockURL = Paths.lock
 
         do {
-            try FileManager.default.createDirectory(at: dataDir, withIntermediateDirectories: true)
+            try Paths.createDirectory(Paths.state, permissions: 0o700)
+            try Paths.createDirectory(Paths.data)
         } catch {
-            Console.error("Failed to create \(dataDir.path): \(error.localizedDescription)")
+            Console.error("Failed to create \(Paths.state.path): \(error.localizedDescription)")
             return 1
         }
 
