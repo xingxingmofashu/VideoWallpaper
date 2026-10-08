@@ -15,6 +15,7 @@ final class Wallpaper: NSObject {
     private var heartbeatTimer: Timer?
     private var stallTimer: Timer?
     private var waveformTimer: Timer?
+    private static let waveformInterval: TimeInterval = 1.0 / 60.0
 
     private var waveformHosts: [NSView] = []
     private var spectrum: AudioSpectrum?
@@ -277,7 +278,7 @@ final class Wallpaper: NSObject {
 
     private func startWaveformTimer() {
         guard waveformTimer == nil else { return }
-        waveformTimer = repeatingTimer(interval: 1.0 / 30.0) { [weak self] in
+        waveformTimer = repeatingTimer(interval: Self.waveformInterval) { [weak self] in
             self?.tickWaveform()
         }
     }
@@ -289,7 +290,11 @@ final class Wallpaper: NSObject {
 
     private func tickWaveform() {
         guard isRunning, waveformEnabled, let spectrum else { return }
-        spectrumStore.bands = spectrum.advance(active: !player.isMuted)
+        spectrumStore.bands = spectrum.advance(active: !player.isMuted, dt: Float(Self.waveformInterval))
+    }
+
+    func setSpectrumColor(_ color: SpectrumColor) {
+        spectrumStore.color = color
     }
 
     func setWaveform(_ enabled: Bool) {
@@ -335,15 +340,15 @@ final class Wallpaper: NSObject {
     private func addWaveformHost(contentView: NSView) {
         let bounds = contentView.bounds
         guard bounds.width > 0, bounds.height > 0 else { return }
-        let panel = GlassSpectrumView.panelSize(in: bounds.size)
+        let panel = SpectrumView.panelSize(in: bounds.size)
         let padding: CGFloat = 48
         let hostSize = CGSize(width: panel.width + padding * 2, height: panel.height + padding * 2)
-        let centreY = bounds.height * (1 - GlassSpectrumView.verticalPosition)
-        let host = NSHostingView(rootView: GlassSpectrumView(store: spectrumStore, panelSize: panel))
+        let centerY = bounds.height * (1 - SpectrumView.verticalPosition)
+        let host = NSHostingView(rootView: SpectrumView(store: spectrumStore, panelSize: panel))
         host.layer?.backgroundColor = NSColor.clear.cgColor
         host.frame = CGRect(
             x: (bounds.width - hostSize.width) / 2,
-            y: centreY - hostSize.height / 2,
+            y: centerY - hostSize.height / 2,
             width: hostSize.width,
             height: hostSize.height)
         contentView.addSubview(host)
