@@ -11,6 +11,7 @@ struct VideoWallpaper: ParsableCommand {
             MuteCommand.self,
             UnmuteCommand.self,
             WaveformCommand.self,
+            UpgradeCommand.self,
             UninstallCommand.self,
             VersionCommand.self,
         ],

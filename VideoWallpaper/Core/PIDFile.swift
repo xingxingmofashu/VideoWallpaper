@@ -5,9 +5,8 @@ final class PIDFile {
 
     let url: URL
 
-    init(directory: URL = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent(".vw", isDirectory: true)) {
-        url = directory.appendingPathComponent("vw.pid")
+    init(url: URL = Paths.pid) {
+        self.url = url
     }
 
     var pid: pid_t? {
@@ -26,9 +25,7 @@ final class PIDFile {
             return .alreadyRunning(pid: existing)
         }
         do {
-            try FileManager.default.createDirectory(
-                at: url.deletingLastPathComponent(),
-                withIntermediateDirectories: true)
+            try Paths.createDirectory(Paths.state, permissions: 0o700)
             try String(pid).write(to: url, atomically: true, encoding: .utf8)
             return .acquired
         } catch {

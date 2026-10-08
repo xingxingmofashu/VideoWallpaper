@@ -47,13 +47,19 @@ vw stop                            # stop
 
 ## Install
 
-One line, no clone needed (downloads the latest release):
+With Homebrew (recommended):
+
+```bash
+brew install xingxingmofashu/tap/vw
+```
+
+With the installer — no clone needed, downloads the latest release:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/xingxingmofashu/VideoWallpaper/main/Scripts/install.sh | bash
 ```
 
-Or build from source:
+From source:
 
 ```bash
 git clone https://github.com/xingxingmofashu/VideoWallpaper.git
@@ -61,20 +67,31 @@ cd VideoWallpaper
 ./Scripts/install.sh
 ```
 
-Either way the script installs to the first writable location in this order:
-`$VW_PREFIX`, `/usr/local/bin` (sudo only if needed), `/opt/homebrew/bin`, and removes
-the previous binary before copying, because overwriting a signed binary in place
-(same inode) gets SIGKILLed by macOS on next launch.
+The installer places the binary at `~/.vw/bin/vw` and appends that directory to your
+shell config (`.zshrc`, `.bashrc`, `config.fish`, ...). It needs no sudo; pass
+`--no-modify-path` to edit your shell config yourself, `--version <v>` to pin a
+release, or `--binary <path>` to install a local build.
 
-Uninstall:
+### Upgrade
+
+```bash
+vw upgrade                 # latest release
+vw upgrade 1.5.0           # a specific version
+```
+
+`vw upgrade` detects how vw was installed and uses the matching mechanism: `brew
+upgrade vw` for a Homebrew install, the installer for a `~/.vw/bin` install.
+
+### Uninstall
 
 ```bash
 vw uninstall
 ```
 
-It stops the running instance, removes the installed binary and deletes `~/.vw`. If the
-binary sits in a directory you cannot write (for example `/usr/local/bin` installed via
-sudo), it prints the `sudo rm` command to run instead.
+It stops the running instance, removes the data and state directories, deletes the
+binary and takes the PATH entry back out of your shell config. `--dry-run` lists what
+would be removed and `--force` skips the confirmation prompt. For a Homebrew install,
+run `brew uninstall vw` instead.
 
 ## Usage
 
@@ -85,7 +102,8 @@ vw mute                    mute the running instance's audio
 vw unmute                  unmute the running instance's audio
 vw waveform on|off         turn the desktop waveform on or off
 vw waveform color          switch the waveform color (default|gradient)
-vw uninstall               stop the instance, remove the binary and runtime data
+vw upgrade [version]       upgrade to the latest or a specific version
+vw uninstall               stop the instance and remove vw and its data
 vw version                 show version
 vw help                    show full help
 ```
@@ -131,11 +149,12 @@ shell. `bash` and `fish` work the same way. Every subcommand documents itself wi
 
 - `vw run` re-executes itself via `posix_spawn` with `POSIX_SPAWN_SETSID`: the daemon
   detaches from the terminal (survives close, SIGHUP ignored), stdin goes to `/dev/null`,
-  and stdout/stderr append to `~/.vw/vw.log`.
-- The daemon writes `~/.vw/vw.pid`; `vw stop` verifies the PID actually belongs to
-  `vw` (`proc_pidpath` on both sides) before sending `SIGTERM`.
-- A held `flock` on `~/.vw/vw.lock` is inherited by the daemon, so the single-instance
-  guarantee covers the whole daemon lifetime and releases automatically on exit or kill.
+  and stdout/stderr append to `~/.local/share/vw/vw.log`.
+- The daemon writes `~/.local/state/vw/vw.pid`; `vw stop` verifies the PID actually
+  belongs to `vw` (`proc_pidpath` on both sides) before sending `SIGTERM`.
+- A held `flock` on `~/.local/state/vw/vw.lock` is inherited by the daemon, so the
+  single-instance guarantee covers the whole daemon lifetime and releases automatically
+  on exit or kill.
 - One borderless `NSWindow` per screen at the desktop window level with an
   `AVPlayerLayer`; windows are rebuilt only when the screen configuration really changes.
 - The playlist keeps the next video queued on a single `AVQueuePlayer` so items
@@ -144,18 +163,26 @@ shell. `bash` and `fish` work the same way. Every subcommand documents itself wi
 
 ### Runtime files
 
+Everything lives under XDG directories; `$XDG_DATA_HOME` and `$XDG_STATE_HOME` are
+respected when set.
+
 | Path | Purpose |
 |---|---|
-| `~/.vw/vw.pid` | PID of the running daemon |
-| `~/.vw/vw.lock` | single-instance lock |
-| `~/.vw/vw.sock` | runtime control socket |
-| `~/.vw/vw.log` | daemon output/errors (truncated at each start) |
+| `~/.local/state/vw/vw.pid` | PID of the running daemon |
+| `~/.local/state/vw/vw.lock` | single-instance lock |
+| `~/.local/state/vw/vw.sock` | runtime control socket |
+| `~/.local/share/vw/vw.log` | daemon output/errors (truncated at each start) |
+| `~/.vw/bin/vw` | the binary placed by the installer |
+
+The state directory is created with mode `0700`, so only you can reach the control
+socket.
 
 ## Troubleshooting
 
 - `Another instance is running` → run `vw stop` first.
-- Wallpaper gone → the daemon probably exited; check `ps -p "$(cat ~/.vw/vw.pid)"`,
-  then start again with `vw run`. The reason for any abnormal exit is in `~/.vw/vw.log`.
+- Wallpaper gone → the daemon probably exited; check
+  `ps -p "$(cat ~/.local/state/vw/vw.pid)"`, then start again with `vw run`. The reason
+  for any abnormal exit is in `~/.local/share/vw/vw.log`.
 - The **lock screen** always shows the system's static wallpaper; that is a macOS
   limitation. The video resumes on the desktop after unlock.
 - If you downloaded the binary with a **browser** instead of `curl`, macOS Gatekeeper

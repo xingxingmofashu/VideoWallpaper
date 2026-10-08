@@ -2,9 +2,7 @@ import Foundation
 import Darwin
 
 enum ControlSocket {
-    static var path: String {
-        PIDFile.shared.url.deletingLastPathComponent().appendingPathComponent("vw.sock").path
-    }
+    static var path: String { Paths.socket.path }
 }
 
 func unixAddress(_ path: String) -> sockaddr_un? {
